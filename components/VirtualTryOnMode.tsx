@@ -198,7 +198,7 @@ It is absolutely mandatory that the person's face looks exactly like the origina
             <div className="space-y-2">
               <Label className="text-muted-foreground">Aspect Ratio</Label>
               <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -213,7 +213,7 @@ It is absolutely mandatory that the person's face looks exactly like the origina
             <div className="space-y-2">
               <Label className="text-muted-foreground">Quality</Label>
               <Select value={imageSize} onValueChange={setImageSize}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

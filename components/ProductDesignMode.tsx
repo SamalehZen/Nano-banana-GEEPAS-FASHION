@@ -186,7 +186,7 @@ export function ProductDesignMode() {
             <div className="space-y-2">
               <Label className="text-muted-foreground">Aspect Ratio</Label>
               <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -201,7 +201,7 @@ export function ProductDesignMode() {
             <div className="space-y-2">
               <Label className="text-muted-foreground">Quality</Label>
               <Select value={imageSize} onValueChange={setImageSize}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
