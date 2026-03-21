@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { SentIcon, UndoIcon, Loading03Icon } from '@hugeicons/core-free-icons';
 import { JsonViewer } from './JsonViewer';
-import { useApiKey } from '@/contexts/ApiKeyContext';
+import { useGemini } from '@/hooks/use-gemini';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -48,13 +48,13 @@ interface DesignChatbotProps {
 }
 
 export function DesignChatbot({ currentState, onApplyPatch, onUndo, canUndo, isGenerating, loadingStep }: DesignChatbotProps) {
-  const { apiKey } = useApiKey();
+  const ai = useGemini();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSend = async () => {
-    if (!input.trim() || isProcessing || isGenerating) return;
+    if (!input.trim() || isProcessing || isGenerating || !ai) return;
     
     const userMsg = input;
     setInput('');
@@ -62,8 +62,6 @@ export function DesignChatbot({ currentState, onApplyPatch, onUndo, canUndo, isG
     setIsProcessing(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: apiKey! });
-      
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `You are a JSON modifier assistant. 
@@ -136,7 +134,6 @@ Generate a FULLY UPDATED JSON state that incorporates the user's request. Keep e
               <div className="p-3 bg-card border border-border self-start flex items-center gap-2 text-sm text-muted-foreground">
                 <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" />
                 {isProcessing ? "Analyzing request..." : 
-                 loadingStep === 'extracting' ? "Extracting image metadata..." :
                  loadingStep === 'editing' ? "Applying edits to image..." :
                  "Generating new image..."}
               </div>

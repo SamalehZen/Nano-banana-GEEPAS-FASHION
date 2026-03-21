@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Loading03Icon, MagicWand01Icon } from '@hugeicons/core-free-icons';
-import { GoogleGenAI } from '@google/genai';
 import { DesignChatbot, IMAGE_METADATA_SCHEMA } from './DesignChatbot';
-import { useApiKey } from '@/contexts/ApiKeyContext';
+import { useGemini } from '@/hooks/use-gemini';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -12,13 +11,14 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export function VirtualTryOnMode() {
-  const { apiKey } = useApiKey();
+  const ai = useGemini();
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [clothingImage, setClothingImage] = useState<string | null>(null);
   const [locationImage, setLocationImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [loadingStep, setLoadingStep] = useState<'generating' | 'extracting' | 'editing' | null>(null);
+  const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<'generating' | 'editing' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>("3:4");
   const [imageSize, setImageSize] = useState<string>("1K");
@@ -27,31 +27,13 @@ export function VirtualTryOnMode() {
   const [history, setHistory] = useState<{image: string, state: any}[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
 
-  const extractMetadata = async (base64Image: string, mimeType: string) => {
-    const ai = new GoogleGenAI({ apiKey: apiKey! });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [
-        { inlineData: { data: base64Image, mimeType } },
-        { text: 'Analyze this image and extract its metadata, style, composition, and all visible text into a detailed JSON object. Be extremely precise about the visible text and its location.' }
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: IMAGE_METADATA_SCHEMA
-      }
-    });
-    return JSON.parse(response.text!);
-  };
-
   const handleGenerate = async () => {
-    if (!personImage || !clothingImage || !locationImage) return;
+    if (!personImage || !clothingImage || !locationImage || !ai) return;
     setIsGenerating(true);
     setLoadingStep('generating');
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: apiKey! });
-
       const personBase64 = personImage.split(',')[1];
       const personMime = personImage.split(';')[0].split(':')[1];
       
@@ -106,32 +88,51 @@ It is absolutely mandatory that the person's face looks exactly like the origina
         throw new Error("No image generated in the response.");
       }
 
-      setLoadingStep('extracting');
-      const metadata = await extractMetadata(generatedBase64, generatedMime);
-      
       const finalImageUrl = `data:${generatedMime};base64,${generatedBase64}`;
       setResultImage(finalImageUrl);
-      setCurrentState(metadata);
-      setHistory([{ image: finalImageUrl, state: metadata }]);
       setHasGenerated(true);
+      setIsGenerating(false);
+      setLoadingStep(null);
+
+      setIsExtractingMetadata(true);
+      ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          { inlineData: { data: generatedBase64, mimeType: generatedMime } },
+          { text: 'Analyze this image and extract its metadata, style, composition, and all visible text into a detailed JSON object. Be extremely precise about the visible text and its location.' }
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: IMAGE_METADATA_SCHEMA
+        }
+      }).then(res => {
+        const metadata = JSON.parse(res.text!);
+        setCurrentState(metadata);
+        setHistory([{ image: finalImageUrl, state: metadata }]);
+      }).catch(err => {
+        console.error('Metadata extraction failed:', err);
+        const fallback = { style: 'Generated image', keyElements: ['Virtual try-on'] };
+        setCurrentState(fallback);
+        setHistory([{ image: finalImageUrl, state: fallback }]);
+      }).finally(() => {
+        setIsExtractingMetadata(false);
+      });
 
     } catch (err: any) {
       console.error(err);
       setError(err.message || "An error occurred during generation.");
-    } finally {
       setIsGenerating(false);
       setLoadingStep(null);
     }
   };
 
   const handleEdit = async (newState: any, editPrompt: string) => {
-    if (!resultImage) return;
+    if (!resultImage || !ai) return;
     setIsGenerating(true);
     setLoadingStep('editing');
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: apiKey! });
       const base64 = resultImage.split(',')[1];
       const mimeType = resultImage.split(';')[0].split(':')[1];
 
@@ -218,9 +219,9 @@ It is absolutely mandatory that the person's face looks exactly like the origina
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1K">1K (Standard)</SelectItem>
-                  <SelectItem value="2K">2K (High)</SelectItem>
-                  <SelectItem value="4K">4K (Ultra)</SelectItem>
+                  <SelectItem value="1K">1K — Standard</SelectItem>
+                  <SelectItem value="2K">2K — Slower generation</SelectItem>
+                  <SelectItem value="4K">4K — Much slower generation</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -236,7 +237,6 @@ It is absolutely mandatory that the person's face looks exactly like the origina
               <>
                 <HugeiconsIcon icon={Loading03Icon} size={20} className="animate-spin" />
                 {loadingStep === 'generating' ? 'Generating Image...' : 
-                 loadingStep === 'extracting' ? 'Extracting Metadata...' : 
                  loadingStep === 'editing' ? 'Applying Edits...' : 'Processing...'}
               </>
             ) : (
@@ -274,15 +274,22 @@ It is absolutely mandatory that the person's face looks exactly like the origina
         </Card>
       </div>
 
-      {hasGenerated && currentState && (
-        <DesignChatbot 
-          currentState={currentState}
-          onApplyPatch={handleEdit}
-          onUndo={undo}
-          canUndo={history.length > 1}
-          isGenerating={isGenerating}
-          loadingStep={loadingStep}
-        />
+      {hasGenerated && (
+        isExtractingMetadata ? (
+          <div className="flex items-center justify-center gap-3 py-8 text-muted-foreground">
+            <HugeiconsIcon icon={Loading03Icon} size={18} className="animate-spin" />
+            <span className="text-sm">Analyzing image for AI assistant...</span>
+          </div>
+        ) : currentState ? (
+          <DesignChatbot 
+            currentState={currentState}
+            onApplyPatch={handleEdit}
+            onUndo={undo}
+            canUndo={history.length > 1}
+            isGenerating={isGenerating}
+            loadingStep={loadingStep}
+          />
+        ) : null
       )}
     </div>
   );
