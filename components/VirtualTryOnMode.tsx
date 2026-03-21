@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
+import { MultiImageUploader } from './MultiImageUploader';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Loading03Icon, MagicWand01Icon, Download01Icon } from '@hugeicons/core-free-icons';
 import { downloadDataUri } from '@/lib/download';
@@ -11,11 +12,24 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
+function buildImageParts(images: string[], label: string) {
+  const parts: any[] = [];
+  images.forEach((img, i) => {
+    const base64 = img.split(',')[1];
+    const mime = img.split(';')[0].split(':')[1];
+    parts.push(
+      { text: images.length === 1 ? `${label}:` : `${label} ${i + 1} of ${images.length}:` },
+      { inlineData: { data: base64, mimeType: mime } }
+    );
+  });
+  return parts;
+}
+
 export function VirtualTryOnMode() {
   const ai = useGemini();
   const [personImage, setPersonImage] = useState<string | null>(null);
-  const [clothingImage, setClothingImage] = useState<string | null>(null);
-  const [locationImage, setLocationImage] = useState<string | null>(null);
+  const [clothingImages, setClothingImages] = useState<string[]>([]);
+  const [locationImages, setLocationImages] = useState<string[]>([]);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
@@ -29,7 +43,7 @@ export function VirtualTryOnMode() {
   const [hasGenerated, setHasGenerated] = useState(false);
 
   const handleGenerate = async () => {
-    if (!personImage || !clothingImage || !locationImage || !ai) return;
+    if (!personImage || clothingImages.length === 0 || locationImages.length === 0 || !ai) return;
     setIsGenerating(true);
     setLoadingStep('generating');
     setError(null);
@@ -37,18 +51,22 @@ export function VirtualTryOnMode() {
     try {
       const personBase64 = personImage.split(',')[1];
       const personMime = personImage.split(';')[0].split(':')[1];
-      
-      const clothingBase64 = clothingImage.split(',')[1];
-      const clothingMime = clothingImage.split(';')[0].split(':')[1];
 
-      const locationBase64 = locationImage.split(',')[1];
-      const locationMime = locationImage.split(';')[0].split(':')[1];
+      const clothingParts = buildImageParts(clothingImages, 'Clothing/Outfit');
+      const locationParts = buildImageParts(locationImages, 'Location/Environment');
 
-      const prompt = `CRITICAL INSTRUCTION: You are an expert photo editor performing a virtual try-on. 
-1. BASE IMAGE: Use the Person/Model image as your exact base. 
+      const multiClothing = clothingImages.length > 1;
+      const multiLocation = locationImages.length > 1;
+
+      const prompt = `CRITICAL INSTRUCTION: You are an expert photo editor performing a virtual try-on.
+1. BASE IMAGE: Use the Person/Model image as your exact base.
 2. IDENTITY PRESERVATION: The face, facial features, hair, and skin tone MUST remain 100% IDENTICAL to the original person. Do not alter their identity, expression, or facial structure in any way. 100% resemblance is mandatory.
-3. CLOTHING TRANSFER: Dress the person in the exact Clothing/Outfit provided in the second image. Ensure natural folds, shadows, and fit.
-4. ENVIRONMENT: Place the person in the Location/Environment provided in the third image, matching the lighting and shadows perfectly.
+3. CLOTHING TRANSFER: ${multiClothing
+  ? `The user provided ${clothingImages.length} clothing/outfit images. Combine all pieces into a single coherent outfit on the person — for example, a top from one image, pants from another, accessories from another. Layer them naturally with proper folds, shadows, and fit.`
+  : `Dress the person in the exact Clothing/Outfit provided. Ensure natural folds, shadows, and fit.`}
+4. ENVIRONMENT: ${multiLocation
+  ? `The user provided ${locationImages.length} location/environment reference images. Blend elements from all locations to create a cohesive scene — take the best aspects of each (background, lighting, atmosphere) and merge them naturally.`
+  : `Place the person in the Location/Environment provided, matching the lighting and shadows perfectly.`}
 It is absolutely mandatory that the person's face looks exactly like the original photo without any AI modifications to their facial identity.`;
 
       const response = await ai.models.generateContent({
@@ -57,10 +75,8 @@ It is absolutely mandatory that the person's face looks exactly like the origina
           parts: [
             { text: "Person/Model:" },
             { inlineData: { data: personBase64, mimeType: personMime } },
-            { text: "Clothing/Outfit:" },
-            { inlineData: { data: clothingBase64, mimeType: clothingMime } },
-            { text: "Location/Environment:" },
-            { inlineData: { data: locationBase64, mimeType: locationMime } },
+            ...clothingParts,
+            ...locationParts,
             { text: prompt }
           ]
         },
@@ -191,10 +207,12 @@ It is absolutely mandatory that the person's face looks exactly like the origina
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-4">
             <ImageUploader label="1. Model" image={personImage} setImage={setPersonImage} />
-            <ImageUploader label="2. Clothing" image={clothingImage} setImage={setClothingImage} />
-            <ImageUploader label="3. Location" image={locationImage} setImage={setLocationImage} />
+            <div className="grid grid-cols-2 gap-4">
+              <MultiImageUploader label="2. Clothing" images={clothingImages} setImages={setClothingImages} />
+              <MultiImageUploader label="3. Location" images={locationImages} setImages={setLocationImages} />
+            </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
@@ -230,7 +248,7 @@ It is absolutely mandatory that the person's face looks exactly like the origina
           
           <Button
             onClick={() => handleGenerate()}
-            disabled={!personImage || !clothingImage || !locationImage || isGenerating}
+            disabled={!personImage || clothingImages.length === 0 || locationImages.length === 0 || isGenerating}
             className="w-full h-auto py-3 text-base font-semibold gap-2"
             size="lg"
           >
