@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ApiKeyProvider, useApiKey } from '@/contexts/ApiKeyContext';
+import { ApiKeyProvider, useApiKey, IMAGE_MODELS, type ImageModelId } from '@/contexts/ApiKeyContext';
 import ApiKeyGuard from '@/components/ApiKeyGuard';
 import { ProductDesignMode } from '@/components/ProductDesignMode';
 import { VirtualTryOnMode } from '@/components/VirtualTryOnMode';
@@ -14,10 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 
 function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { apiKey, setApiKey, clearApiKey } = useApiKey();
+  const { apiKey, setApiKey, clearApiKey, imageModel, setImageModel } = useApiKey();
   const [showKey, setShowKey] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [confirmClear, setConfirmClear] = useState(false);
@@ -60,6 +61,20 @@ function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
                 <HugeiconsIcon icon={showKey ? ViewOffIcon : ViewIcon} size={16} />
               </Button>
             </div>
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-xs uppercase tracking-wider">Image Model</Label>
+            <Select value={imageModel} onValueChange={(v) => setImageModel(v as ImageModelId)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(IMAGE_MODELS).map(([id, name]) => (
+                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Separator />
           <div className="space-y-2">

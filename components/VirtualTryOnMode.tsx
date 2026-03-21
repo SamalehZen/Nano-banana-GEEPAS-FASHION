@@ -6,6 +6,7 @@ import { Loading03Icon, MagicWand01Icon, Download01Icon } from '@hugeicons/core-
 import { downloadDataUri } from '@/lib/download';
 import { DesignChatbot, IMAGE_METADATA_SCHEMA } from './DesignChatbot';
 import { useGemini } from '@/hooks/use-gemini';
+import { useApiKey } from '@/contexts/ApiKeyContext';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,6 +28,7 @@ function buildImageParts(images: string[], label: string) {
 
 export function VirtualTryOnMode() {
   const ai = useGemini();
+  const { imageModel } = useApiKey();
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [clothingImages, setClothingImages] = useState<string[]>([]);
   const [locationImages, setLocationImages] = useState<string[]>([]);
@@ -70,7 +72,7 @@ export function VirtualTryOnMode() {
 It is absolutely mandatory that the person's face looks exactly like the original photo without any AI modifications to their facial identity.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
+        model: imageModel,
         contents: {
           parts: [
             { text: "Person/Model:" },
@@ -154,7 +156,7 @@ It is absolutely mandatory that the person's face looks exactly like the origina
       const mimeType = resultImage.split(';')[0].split(':')[1];
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
+        model: imageModel,
         contents: {
           parts: [
             { inlineData: { data: base64, mimeType } },

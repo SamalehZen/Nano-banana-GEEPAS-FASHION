@@ -6,6 +6,7 @@ import { Loading03Icon, MagicWand01Icon, Download01Icon } from '@hugeicons/core-
 import { downloadDataUri } from '@/lib/download';
 import { DesignChatbot, IMAGE_METADATA_SCHEMA } from './DesignChatbot';
 import { useGemini } from '@/hooks/use-gemini';
+import { useApiKey } from '@/contexts/ApiKeyContext';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -14,6 +15,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 
 export function ProductDesignMode() {
   const ai = useGemini();
+  const { imageModel } = useApiKey();
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export function ProductDesignMode() {
         : `Analyze the reference design image (layout, colors, lighting, composition, textures, branding style). The user has provided ${productImages.length} product images. Intelligently map each product image to a corresponding product placement/slot in the reference design. Replace or integrate each product into its matching position while preserving the exact same layout, colors, lighting, composition, textures, and branding style. Each product must be seamlessly embedded in its correct location as if it were originally part of the design. Maintain high visual realism and professional quality throughout.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
+        model: imageModel,
         contents: {
           parts: [
             { text: "Reference design style:" },
@@ -137,7 +139,7 @@ export function ProductDesignMode() {
       const mimeType = resultImage.split(';')[0].split(':')[1];
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
+        model: imageModel,
         contents: {
           parts: [
             { inlineData: { data: base64, mimeType } },

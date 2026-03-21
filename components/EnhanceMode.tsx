@@ -4,12 +4,14 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { Loading03Icon, ArrowExpand01Icon, Download01Icon } from '@hugeicons/core-free-icons';
 import { downloadDataUri } from '@/lib/download';
 import { useGemini } from '@/hooks/use-gemini';
+import { useApiKey } from '@/contexts/ApiKeyContext';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 
 export function EnhanceMode() {
   const ai = useGemini();
+  const { imageModel } = useApiKey();
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -25,7 +27,7 @@ export function EnhanceMode() {
       const mime = sourceImage.split(';')[0].split(':')[1];
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
+        model: imageModel,
         contents: {
           parts: [
             { inlineData: { data: base64, mimeType: mime } },
