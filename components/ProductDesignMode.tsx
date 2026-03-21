@@ -22,7 +22,7 @@ export function ProductDesignMode() {
   const [loadingStep, setLoadingStep] = useState<'generating' | 'editing' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>("1:1");
-  const [imageSize, setImageSize] = useState<string>("1K");
+  const [imageSize, setImageSize] = useState<string>("2K");
   
   const [currentState, setCurrentState] = useState<any>(null);
   const [history, setHistory] = useState<{image: string, state: any}[]>([]);
@@ -218,9 +218,9 @@ export function ProductDesignMode() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1K">1K — Standard</SelectItem>
-                  <SelectItem value="2K">2K — Slower generation</SelectItem>
-                  <SelectItem value="4K">4K — Much slower generation</SelectItem>
+                  <SelectItem value="1K">1K — Fast preview</SelectItem>
+                  <SelectItem value="2K">2K — Best quality</SelectItem>
+                  <SelectItem value="4K">4K — Lower fidelity, prefer AI Enhance</SelectItem>
                 </SelectContent>
               </Select>
             </div>

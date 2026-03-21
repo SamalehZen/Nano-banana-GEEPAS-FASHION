@@ -5,8 +5,9 @@ import { ApiKeyProvider, useApiKey } from '@/contexts/ApiKeyContext';
 import ApiKeyGuard from '@/components/ApiKeyGuard';
 import { ProductDesignMode } from '@/components/ProductDesignMode';
 import { VirtualTryOnMode } from '@/components/VirtualTryOnMode';
+import { EnhanceMode } from '@/components/EnhanceMode';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { SparklesIcon, Shirt01Icon, Image01Icon, Settings01Icon, ViewIcon, ViewOffIcon, Delete01Icon } from '@hugeicons/core-free-icons';
+import { SparklesIcon, Shirt01Icon, Image01Icon, ArrowExpand01Icon, Settings01Icon, ViewIcon, ViewOffIcon, Delete01Icon } from '@hugeicons/core-free-icons';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -126,22 +127,29 @@ function AppContent() {
 
           <Tabs defaultValue="design" className="w-full">
             <TabsList
-              className="w-full grid grid-cols-2 h-auto p-1 bg-[#f6f8fa] border border-[#e5e5e5] mb-8"
+              className="w-full grid grid-cols-3 h-auto p-1 bg-[#f6f8fa] border border-[#e5e5e5] mb-8"
               aria-label="Mode selection"
             >
               <TabsTrigger
                 value="design"
-                className="flex items-center justify-center gap-2.5 h-auto py-3 px-6 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
+                className="flex items-center justify-center gap-2.5 h-auto py-3 px-4 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
               >
                 <HugeiconsIcon icon={Image01Icon} size={18} />
                 Product Design
               </TabsTrigger>
               <TabsTrigger
                 value="tryon"
-                className="flex items-center justify-center gap-2.5 h-auto py-3 px-6 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
+                className="flex items-center justify-center gap-2.5 h-auto py-3 px-4 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
               >
                 <HugeiconsIcon icon={Shirt01Icon} size={18} />
                 Virtual Try-On
+              </TabsTrigger>
+              <TabsTrigger
+                value="enhance"
+                className="flex items-center justify-center gap-2.5 h-auto py-3 px-4 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
+              >
+                <HugeiconsIcon icon={ArrowExpand01Icon} size={18} />
+                AI Enhance
               </TabsTrigger>
             </TabsList>
 
@@ -151,6 +159,9 @@ function AppContent() {
               </TabsContent>
               <TabsContent value="tryon" className="mt-0">
                 <VirtualTryOnMode />
+              </TabsContent>
+              <TabsContent value="enhance" className="mt-0">
+                <EnhanceMode />
               </TabsContent>
             </Card>
           </Tabs>
