@@ -3,8 +3,15 @@ import { ImageUploader } from './ImageUploader';
 import { Loader2, Wand2 } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { DesignChatbot, IMAGE_METADATA_SCHEMA } from './DesignChatbot';
+import { useApiKey } from '@/contexts/ApiKeyContext';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export function ProductDesignMode() {
+  const { apiKey } = useApiKey();
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [productImage, setProductImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -19,7 +26,7 @@ export function ProductDesignMode() {
   const [hasGenerated, setHasGenerated] = useState(false);
 
   const extractMetadata = async (base64Image: string, mimeType: string) => {
-    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
+    const ai = new GoogleGenAI({ apiKey: apiKey! });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: [
@@ -41,7 +48,7 @@ export function ProductDesignMode() {
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
+      const ai = new GoogleGenAI({ apiKey: apiKey! });
 
       const refBase64 = referenceImage.split(',')[1];
       const refMime = referenceImage.split(';')[0].split(':')[1];
@@ -112,7 +119,7 @@ export function ProductDesignMode() {
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
+      const ai = new GoogleGenAI({ apiKey: apiKey! });
       const base64 = resultImage.split(',')[1];
       const mimeType = resultImage.split(';')[0].split(':')[1];
 
@@ -170,99 +177,100 @@ export function ProductDesignMode() {
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <ImageUploader label="1. Reference Design" image={referenceImage} setImage={setReferenceImage} />
-          <ImageUploader label="2. Product Image" image={productImage} setImage={setProductImage} />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Aspect Ratio</label>
-            <select 
-              value={aspectRatio} 
-              onChange={(e) => setAspectRatio(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="1:1">1:1 (Square)</option>
-              <option value="3:4">3:4 (Portrait)</option>
-              <option value="4:3">4:3 (Landscape)</option>
-              <option value="16:9">16:9 (Widescreen)</option>
-              <option value="9:16">9:16 (Vertical)</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <ImageUploader label="1. Reference Design" image={referenceImage} setImage={setReferenceImage} />
+            <ImageUploader label="2. Product Image" image={productImage} setImage={setProductImage} />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Quality</label>
-            <select 
-              value={imageSize} 
-              onChange={(e) => setImageSize(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="1K">1K (Standard)</option>
-              <option value="2K">2K (High)</option>
-              <option value="4K">4K (Ultra)</option>
-            </select>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Aspect Ratio</Label>
+              <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                  <SelectItem value="3:4">3:4 (Portrait)</SelectItem>
+                  <SelectItem value="4:3">4:3 (Landscape)</SelectItem>
+                  <SelectItem value="16:9">16:9 (Widescreen)</SelectItem>
+                  <SelectItem value="9:16">9:16 (Vertical)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Quality</Label>
+              <Select value={imageSize} onValueChange={setImageSize}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1K">1K (Standard)</SelectItem>
+                  <SelectItem value="2K">2K (High)</SelectItem>
+                  <SelectItem value="4K">4K (Ultra)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-        
-        <button
-          onClick={() => handleGenerate()}
-          disabled={!referenceImage || !productImage || isGenerating}
-          className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="animate-spin" size={20} />
-              {loadingStep === 'generating' ? 'Generating Image...' : 
-               loadingStep === 'extracting' ? 'Extracting Metadata...' : 
-               loadingStep === 'editing' ? 'Applying Edits...' : 'Processing...'}
-            </>
-          ) : (
-            <>
-              <Wand2 size={20} />
-              Generate Design
-            </>
-          )}
-        </button>
-
-        {error && (
-          <div className="p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-sm">
-            {error}
-          </div>
-        )}
-      </div>
-
-      <div className="bg-muted/30 rounded-2xl border border-border flex flex-col items-center justify-center overflow-hidden min-h-[400px] relative">
-        {resultImage ? (
-          <img src={resultImage} alt="Generated Design" className="w-full h-full object-contain" />
-        ) : (
-          <div className="text-center text-muted-foreground p-8">
-            <Wand2 size={48} className="mx-auto mb-4 opacity-20" />
-            <p>Your generated design will appear here</p>
-          </div>
-        )}
-        
-        {resultImage && (
-          <a
-            href={resultImage}
-            download="generated-design.png"
-            className="absolute bottom-4 right-4 py-2 px-4 bg-secondary/90 backdrop-blur-sm text-secondary-foreground rounded-lg text-center font-medium hover:bg-secondary transition-colors shadow-lg"
+          
+          <Button
+            onClick={() => handleGenerate()}
+            disabled={!referenceImage || !productImage || isGenerating}
+            className="w-full py-6 text-base font-semibold gap-2"
+            size="lg"
           >
-            Download Image
-          </a>
-        )}
-      </div>
-    </div>
+            {isGenerating ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                {loadingStep === 'generating' ? 'Generating Image...' : 
+                 loadingStep === 'extracting' ? 'Extracting Metadata...' : 
+                 loadingStep === 'editing' ? 'Applying Edits...' : 'Processing...'}
+              </>
+            ) : (
+              <>
+                <Wand2 size={20} />
+                Generate Design
+              </>
+            )}
+          </Button>
 
-    {hasGenerated && currentState && (
-      <DesignChatbot 
-        currentState={currentState}
-        onApplyPatch={handleEdit}
-        onUndo={undo}
-        canUndo={history.length > 1}
-        isGenerating={isGenerating}
-        loadingStep={loadingStep}
-      />
-    )}
-  </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <Card className="flex flex-col items-center justify-center overflow-hidden min-h-[400px] relative bg-muted/30">
+          {resultImage ? (
+            <img src={resultImage} alt="Generated Design" className="w-full h-full object-contain" />
+          ) : (
+            <div className="text-center text-muted-foreground p-8">
+              <Wand2 size={48} className="mx-auto mb-4 opacity-20" />
+              <p>Your generated design will appear here</p>
+            </div>
+          )}
+          
+          {resultImage && (
+            <Button variant="secondary" asChild className="absolute bottom-4 right-4 shadow-lg backdrop-blur-sm">
+              <a href={resultImage} download="generated-design.png">
+                Download Image
+              </a>
+            </Button>
+          )}
+        </Card>
+      </div>
+
+      {hasGenerated && currentState && (
+        <DesignChatbot 
+          currentState={currentState}
+          onApplyPatch={handleEdit}
+          onUndo={undo}
+          canUndo={history.length > 1}
+          isGenerating={isGenerating}
+          loadingStep={loadingStep}
+        />
+      )}
+    </div>
   );
 }

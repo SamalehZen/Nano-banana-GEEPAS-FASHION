@@ -1,20 +1,118 @@
 'use client';
 
 import { useState } from 'react';
+import { ApiKeyProvider, useApiKey } from '@/contexts/ApiKeyContext';
 import ApiKeyGuard from '@/components/ApiKeyGuard';
 import { ProductDesignMode } from '@/components/ProductDesignMode';
 import { VirtualTryOnMode } from '@/components/VirtualTryOnMode';
-import { Sparkles, Shirt, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Shirt, Image as ImageIcon, Settings, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
-export default function Home() {
-  const [activeTab, setActiveTab] = useState<'design' | 'tryon'>('design');
+function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { apiKey, setApiKey, clearApiKey } = useApiKey();
+  const [showKey, setShowKey] = useState(false);
+  const [newKey, setNewKey] = useState('');
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  const maskedKey = apiKey ? `${apiKey.slice(0, 6)}${'•'.repeat(20)}${apiKey.slice(-4)}` : '';
+
+  const handleUpdate = () => {
+    const trimmed = newKey.trim();
+    if (trimmed.length >= 10) {
+      setApiKey(trimmed);
+      setNewKey('');
+    }
+  };
+
+  const handleClear = () => {
+    if (confirmClear) {
+      clearApiKey();
+      setConfirmClear(false);
+      onOpenChange(false);
+    } else {
+      setConfirmClear(true);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); setConfirmClear(false); setNewKey(''); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>API Key Settings</DialogTitle>
+          <DialogDescription>Manage your Google Gemini API key.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-xs uppercase tracking-wider">Current Key</Label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-muted px-3 py-2 text-sm font-mono truncate">
+                {showKey ? apiKey : maskedKey}
+              </code>
+              <Button variant="ghost" size="icon" onClick={() => setShowKey(!showKey)}>
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            <Label htmlFor="new-key">Update Key</Label>
+            <div className="flex gap-2">
+              <Input
+                id="new-key"
+                type="password"
+                placeholder="Enter new API key..."
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
+              />
+              <Button onClick={handleUpdate} disabled={newKey.trim().length < 10}>
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="flex-row justify-between sm:justify-between">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleClear}
+            className="gap-1.5"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {confirmClear ? 'Confirm Remove' : 'Remove Key'}
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AppContent() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <ApiKeyGuard>
       <main className="min-h-screen bg-background text-foreground selection:bg-primary/20">
         <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <header className="mb-12 text-center space-y-4">
-            <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-2xl mb-4">
+          <header className="mb-12 text-center space-y-4 relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <div className="inline-flex items-center justify-center p-3 bg-primary/10 mb-4">
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-sans">
@@ -25,38 +123,40 @@ export default function Home() {
             </p>
           </header>
 
-          <div className="flex justify-center mb-12">
-            <div className="inline-flex bg-muted p-1 rounded-xl">
-              <button
-                onClick={() => setActiveTab('design')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === 'design' 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <ImageIcon size={18} />
-                Product Design
-              </button>
-              <button
-                onClick={() => setActiveTab('tryon')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === 'tryon' 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Shirt size={18} />
-                Virtual Try-On
-              </button>
+          <Tabs defaultValue="design" className="w-full">
+            <div className="flex justify-center mb-12">
+              <TabsList className="h-auto p-1 bg-muted">
+                <TabsTrigger value="design" className="flex items-center gap-2 px-6 py-3 data-[state=active]:shadow-sm">
+                  <ImageIcon size={18} />
+                  Product Design
+                </TabsTrigger>
+                <TabsTrigger value="tryon" className="flex items-center gap-2 px-6 py-3 data-[state=active]:shadow-sm">
+                  <Shirt size={18} />
+                  Virtual Try-On
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </div>
 
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm">
-            {activeTab === 'design' ? <ProductDesignMode /> : <VirtualTryOnMode />}
-          </div>
+            <Card className="p-6 md:p-8">
+              <TabsContent value="design" className="mt-0">
+                <ProductDesignMode />
+              </TabsContent>
+              <TabsContent value="tryon" className="mt-0">
+                <VirtualTryOnMode />
+              </TabsContent>
+            </Card>
+          </Tabs>
         </div>
       </main>
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </ApiKeyGuard>
+  );
+}
+
+export default function Home() {
+  return (
+    <ApiKeyProvider>
+      <AppContent />
+    </ApiKeyProvider>
   );
 }
