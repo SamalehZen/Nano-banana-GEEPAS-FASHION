@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
+import { MultiImageUploader } from './MultiImageUploader';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Loading03Icon, MagicWand01Icon, Download01Icon } from '@hugeicons/core-free-icons';
 import { downloadDataUri } from '@/lib/download';
@@ -14,7 +15,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 export function ProductDesignMode() {
   const ai = useGemini();
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
-  const [productImage, setProductImage] = useState<string | null>(null);
+  const [productImages, setProductImages] = useState<string[]>([]);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
@@ -28,7 +29,7 @@ export function ProductDesignMode() {
   const [hasGenerated, setHasGenerated] = useState(false);
 
   const handleGenerate = async () => {
-    if (!referenceImage || !productImage || !ai) return;
+    if (!referenceImage || productImages.length === 0 || !ai) return;
     setIsGenerating(true);
     setLoadingStep('generating');
     setError(null);
@@ -36,11 +37,21 @@ export function ProductDesignMode() {
     try {
       const refBase64 = referenceImage.split(',')[1];
       const refMime = referenceImage.split(';')[0].split(':')[1];
-      
-      const prodBase64 = productImage.split(',')[1];
-      const prodMime = productImage.split(';')[0].split(':')[1];
 
-      const prompt = `Analyze the reference design image (layout, colors, lighting, composition, textures, branding style). Recreate the exact same design style, but seamlessly integrate the provided product image into that design. Maintain high visual realism and professional quality. The final result must look identical in style to the reference image, but with the user's product perfectly embedded as if it were originally part of the design.`;
+      const productParts: { text: string }[] | { inlineData: { data: string; mimeType: string } }[] = [];
+      productImages.forEach((img, i) => {
+        const base64 = img.split(',')[1];
+        const mime = img.split(';')[0].split(':')[1];
+        productParts.push(
+          { text: `Product image ${i + 1} of ${productImages.length}:` } as any,
+          { inlineData: { data: base64, mimeType: mime } } as any
+        );
+      });
+
+      const isSingle = productImages.length === 1;
+      const prompt = isSingle
+        ? `Analyze the reference design image (layout, colors, lighting, composition, textures, branding style). Recreate the exact same design style, but seamlessly integrate the provided product image into that design. Maintain high visual realism and professional quality. The final result must look identical in style to the reference image, but with the user's product perfectly embedded as if it were originally part of the design.`
+        : `Analyze the reference design image (layout, colors, lighting, composition, textures, branding style). The user has provided ${productImages.length} product images. Intelligently map each product image to a corresponding product placement/slot in the reference design. Replace or integrate each product into its matching position while preserving the exact same layout, colors, lighting, composition, textures, and branding style. Each product must be seamlessly embedded in its correct location as if it were originally part of the design. Maintain high visual realism and professional quality throughout.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.1-flash-image-preview',
@@ -48,8 +59,7 @@ export function ProductDesignMode() {
           parts: [
             { text: "Reference design style:" },
             { inlineData: { data: refBase64, mimeType: refMime } },
-            { text: "Product image to integrate:" },
-            { inlineData: { data: prodBase64, mimeType: prodMime } },
+            ...productParts,
             { text: prompt }
           ]
         },
@@ -182,7 +192,7 @@ export function ProductDesignMode() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <ImageUploader label="1. Reference Design" image={referenceImage} setImage={setReferenceImage} />
-            <ImageUploader label="2. Product Image" image={productImage} setImage={setProductImage} />
+            <MultiImageUploader label="2. Product Images" images={productImages} setImages={setProductImages} />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
@@ -218,7 +228,7 @@ export function ProductDesignMode() {
           
           <Button
             onClick={() => handleGenerate()}
-            disabled={!referenceImage || !productImage || isGenerating}
+            disabled={!referenceImage || productImages.length === 0 || isGenerating}
             className="w-full h-auto py-3 text-base font-semibold gap-2"
             size="lg"
           >
