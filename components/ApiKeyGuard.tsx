@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Eye, EyeOff, ExternalLink, ShieldCheck } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { SparklesIcon, ViewIcon, ViewOffIcon, LinkSquare01Icon, SecurityCheckIcon } from '@hugeicons/core-free-icons';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -38,7 +39,7 @@ export default function ApiKeyGuard({ children }: { children: React.ReactNode })
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto flex h-14 w-14 items-center justify-center bg-primary/10">
-            <Sparkles className="h-7 w-7 text-primary" />
+            <HugeiconsIcon icon={SparklesIcon} size={28} className="text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome to AI Studio Vision</CardTitle>
           <CardDescription className="text-base">
@@ -68,7 +69,7 @@ export default function ApiKeyGuard({ children }: { children: React.ReactNode })
                 className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                 onClick={() => setShowKey(!showKey)}
               >
-                {showKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                <HugeiconsIcon icon={showKey ? ViewOffIcon : ViewIcon} size={16} className="text-muted-foreground" />
               </Button>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -79,7 +80,7 @@ export default function ApiKeyGuard({ children }: { children: React.ReactNode })
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
-            Get your API key <ExternalLink className="h-3.5 w-3.5" />
+            Get your API key <HugeiconsIcon icon={LinkSquare01Icon} size={14} />
           </a>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
@@ -87,7 +88,7 @@ export default function ApiKeyGuard({ children }: { children: React.ReactNode })
             Save & Continue
           </Button>
           <Alert variant="default" className="border-muted">
-            <ShieldCheck className="h-4 w-4" />
+            <HugeiconsIcon icon={SecurityCheckIcon} size={16} />
             <AlertDescription className="text-xs text-muted-foreground">
               Your API key is stored locally in your browser only. It is never sent to any server other than Google&apos;s API.
             </AlertDescription>

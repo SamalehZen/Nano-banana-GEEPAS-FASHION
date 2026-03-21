@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
-import { Loader2, Wand2 } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Loading03Icon, MagicWand01Icon } from '@hugeicons/core-free-icons';
 import { GoogleGenAI } from '@google/genai';
 import { DesignChatbot, IMAGE_METADATA_SCHEMA } from './DesignChatbot';
 import { useApiKey } from '@/contexts/ApiKeyContext';
@@ -221,14 +222,14 @@ export function ProductDesignMode() {
           >
             {isGenerating ? (
               <>
-                <Loader2 className="animate-spin" size={20} />
+                <HugeiconsIcon icon={Loading03Icon} size={20} className="animate-spin" />
                 {loadingStep === 'generating' ? 'Generating Image...' : 
                  loadingStep === 'extracting' ? 'Extracting Metadata...' : 
                  loadingStep === 'editing' ? 'Applying Edits...' : 'Processing...'}
               </>
             ) : (
               <>
-                <Wand2 size={20} />
+                <HugeiconsIcon icon={MagicWand01Icon} size={20} />
                 Generate Design
               </>
             )}
@@ -246,7 +247,7 @@ export function ProductDesignMode() {
             <img src={resultImage} alt="Generated Design" className="w-full h-full object-contain" />
           ) : (
             <div className="text-center text-muted-foreground p-8">
-              <Wand2 size={48} className="mx-auto mb-4 opacity-20" />
+              <HugeiconsIcon icon={MagicWand01Icon} size={48} className="mx-auto mb-4 opacity-20" />
               <p>Your generated design will appear here</p>
             </div>
           )}

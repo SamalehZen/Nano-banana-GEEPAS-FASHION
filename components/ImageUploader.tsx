@@ -1,5 +1,6 @@
 import React from 'react';
-import { UploadCloud, X } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { CloudUploadIcon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,14 +35,14 @@ export function ImageUploader({ label, image, setImage }: ImageUploaderProps) {
             onClick={() => setImage(null)}
             className="absolute top-2 right-2 h-7 w-7 bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
           >
-            <X size={14} />
+            <HugeiconsIcon icon={Cancel01Icon} size={14} />
           </Button>
         </div>
       ) : (
         <Card className="border-2 border-dashed hover:bg-muted/50 transition-colors cursor-pointer p-0">
           <label className="flex flex-col items-center justify-center w-full aspect-square cursor-pointer">
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground" />
+              <HugeiconsIcon icon={CloudUploadIcon} size={32} className="mb-3 text-muted-foreground" />
               <p className="mb-2 text-sm text-muted-foreground text-center px-2">
                 <span className="font-semibold">Click to upload</span>
               </p>

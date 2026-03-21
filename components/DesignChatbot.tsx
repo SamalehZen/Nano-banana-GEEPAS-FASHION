@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Send, Undo, Loader2 } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { SentIcon, UndoIcon, Loading03Icon } from '@hugeicons/core-free-icons';
 import { JsonViewer } from './JsonViewer';
 import { useApiKey } from '@/contexts/ApiKeyContext';
 import { Input } from '@/components/ui/input';
@@ -114,7 +115,7 @@ Generate a FULLY UPDATED JSON state that incorporates the user's request. Keep e
             disabled={!canUndo || isGenerating || isProcessing}
             className="gap-2"
           >
-            <Undo size={14} /> Undo Last Change
+            <HugeiconsIcon icon={UndoIcon} size={14} /> Undo Last Change
           </Button>
         </div>
         
@@ -133,7 +134,7 @@ Generate a FULLY UPDATED JSON state that incorporates the user's request. Keep e
             )}
             {(isProcessing || isGenerating) && (
               <div className="p-3 bg-card border border-border self-start flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 size={14} className="animate-spin" /> 
+                <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" />
                 {isProcessing ? "Analyzing request..." : 
                  loadingStep === 'extracting' ? "Extracting image metadata..." :
                  loadingStep === 'editing' ? "Applying edits to image..." :
@@ -157,7 +158,7 @@ Generate a FULLY UPDATED JSON state that incorporates the user's request. Keep e
             onClick={handleSend}
             disabled={!input.trim() || isProcessing || isGenerating}
           >
-            <Send size={18} />
+            <HugeiconsIcon icon={SentIcon} size={18} />
           </Button>
         </div>
       </div>

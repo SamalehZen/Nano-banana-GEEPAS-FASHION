@@ -5,7 +5,8 @@ import { ApiKeyProvider, useApiKey } from '@/contexts/ApiKeyContext';
 import ApiKeyGuard from '@/components/ApiKeyGuard';
 import { ProductDesignMode } from '@/components/ProductDesignMode';
 import { VirtualTryOnMode } from '@/components/VirtualTryOnMode';
-import { Sparkles, Shirt, Image as ImageIcon, Settings, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { SparklesIcon, Shirt01Icon, Image01Icon, Settings01Icon, ViewIcon, ViewOffIcon, Delete01Icon } from '@hugeicons/core-free-icons';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
                 {showKey ? apiKey : maskedKey}
               </code>
               <Button variant="ghost" size="icon" onClick={() => setShowKey(!showKey)}>
-                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <HugeiconsIcon icon={showKey ? ViewOffIcon : ViewIcon} size={16} />
               </Button>
             </div>
           </div>
@@ -84,7 +85,7 @@ function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
             onClick={handleClear}
             className="gap-1.5"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Delete01Icon} size={14} />
             {confirmClear ? 'Confirm Remove' : 'Remove Key'}
           </Button>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -110,10 +111,10 @@ function AppContent() {
               className="absolute right-0 top-0"
               onClick={() => setSettingsOpen(true)}
             >
-              <Settings className="h-5 w-5 text-muted-foreground" />
+              <HugeiconsIcon icon={Settings01Icon} size={20} className="text-muted-foreground" />
             </Button>
             <div className="inline-flex items-center justify-center p-3 bg-primary/10 mb-4">
-              <Sparkles className="w-8 h-8 text-primary" />
+              <HugeiconsIcon icon={SparklesIcon} size={32} className="text-primary" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-sans">
               AI Studio <span className="text-primary">Vision</span>
@@ -127,11 +128,11 @@ function AppContent() {
             <div className="flex justify-center mb-12">
               <TabsList className="h-auto p-1 bg-muted">
                 <TabsTrigger value="design" className="flex items-center gap-2 px-6 py-3 data-[state=active]:shadow-sm">
-                  <ImageIcon size={18} />
+                  <HugeiconsIcon icon={Image01Icon} size={18} />
                   Product Design
                 </TabsTrigger>
                 <TabsTrigger value="tryon" className="flex items-center gap-2 px-6 py-3 data-[state=active]:shadow-sm">
-                  <Shirt size={18} />
+                  <HugeiconsIcon icon={Shirt01Icon} size={18} />
                   Virtual Try-On
                 </TabsTrigger>
               </TabsList>
