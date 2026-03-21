@@ -131,14 +131,14 @@ function AppContent() {
             >
               <TabsTrigger
                 value="design"
-                className="flex items-center justify-center gap-2.5 h-auto py-3 px-6 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-active:bg-white data-active:text-[#1f2328] data-active:font-semibold"
+                className="flex items-center justify-center gap-2.5 h-auto py-3 px-6 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
               >
                 <HugeiconsIcon icon={Image01Icon} size={18} />
                 Product Design
               </TabsTrigger>
               <TabsTrigger
                 value="tryon"
-                className="flex items-center justify-center gap-2.5 h-auto py-3 px-6 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-active:bg-white data-active:text-[#1f2328] data-active:font-semibold"
+                className="flex items-center justify-center gap-2.5 h-auto py-3 px-6 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
               >
                 <HugeiconsIcon icon={Shirt01Icon} size={18} />
                 Virtual Try-On
