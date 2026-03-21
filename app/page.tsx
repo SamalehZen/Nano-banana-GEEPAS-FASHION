@@ -125,18 +125,16 @@ function AppContent() {
           </header>
 
           <Tabs defaultValue="design" className="w-full">
-            <div className="flex justify-center mb-12">
-              <TabsList className="h-auto p-1 bg-muted">
-                <TabsTrigger value="design" className="flex items-center gap-2 px-6 py-3 data-[state=active]:shadow-sm">
-                  <HugeiconsIcon icon={Image01Icon} size={18} />
-                  Product Design
-                </TabsTrigger>
-                <TabsTrigger value="tryon" className="flex items-center gap-2 px-6 py-3 data-[state=active]:shadow-sm">
-                  <HugeiconsIcon icon={Shirt01Icon} size={18} />
-                  Virtual Try-On
-                </TabsTrigger>
-              </TabsList>
-            </div>
+            <TabsList className="w-full grid grid-cols-2 h-auto p-1 bg-muted mb-8">
+              <TabsTrigger value="design" className="flex items-center justify-center gap-2 py-2.5 text-sm font-medium">
+                <HugeiconsIcon icon={Image01Icon} size={18} />
+                Product Design
+              </TabsTrigger>
+              <TabsTrigger value="tryon" className="flex items-center justify-center gap-2 py-2.5 text-sm font-medium">
+                <HugeiconsIcon icon={Shirt01Icon} size={18} />
+                Virtual Try-On
+              </TabsTrigger>
+            </TabsList>
 
             <Card className="p-6 md:p-8">
               <TabsContent value="design" className="mt-0">
