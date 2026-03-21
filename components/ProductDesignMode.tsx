@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Loading03Icon, MagicWand01Icon } from '@hugeicons/core-free-icons';
+import { Loading03Icon, MagicWand01Icon, Download01Icon } from '@hugeicons/core-free-icons';
+import { downloadDataUri } from '@/lib/download';
 import { DesignChatbot, IMAGE_METADATA_SCHEMA } from './DesignChatbot';
 import { useGemini } from '@/hooks/use-gemini';
 import { Button } from '@/components/ui/button';
@@ -253,10 +254,13 @@ export function ProductDesignMode() {
           )}
           
           {resultImage && (
-            <Button variant="secondary" asChild className="absolute bottom-4 right-4 shadow-lg backdrop-blur-sm">
-              <a href={resultImage} download="generated-design.png">
-                Download Image
-              </a>
+            <Button
+              variant="secondary"
+              className="absolute bottom-4 right-4 shadow-lg backdrop-blur-sm gap-2"
+              onClick={() => downloadDataUri(resultImage, 'generated-design.png')}
+            >
+              <HugeiconsIcon icon={Download01Icon} size={16} />
+              Download Image
             </Button>
           )}
         </Card>
