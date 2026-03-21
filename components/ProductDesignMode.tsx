@@ -217,7 +217,7 @@ export function ProductDesignMode() {
           <Button
             onClick={() => handleGenerate()}
             disabled={!referenceImage || !productImage || isGenerating}
-            className="w-full py-6 text-base font-semibold gap-2"
+            className="w-full h-auto py-3 text-base font-semibold gap-2"
             size="lg"
           >
             {isGenerating ? (

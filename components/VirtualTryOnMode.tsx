@@ -229,7 +229,7 @@ It is absolutely mandatory that the person's face looks exactly like the origina
           <Button
             onClick={() => handleGenerate()}
             disabled={!personImage || !clothingImage || !locationImage || isGenerating}
-            className="w-full py-6 text-base font-semibold gap-2"
+            className="w-full h-auto py-3 text-base font-semibold gap-2"
             size="lg"
           >
             {isGenerating ? (
