@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Type } from '@google/genai';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { SentIcon, UndoIcon, Loading03Icon } from '@hugeicons/core-free-icons';
