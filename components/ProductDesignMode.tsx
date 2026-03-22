@@ -81,11 +81,11 @@ export function ProductDesignMode() {
       let generatedMime = '';
 
       for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData?.data) {
-          generatedBase64 = part.inlineData.data;
-          generatedMime = part.inlineData.mimeType;
-          break;
-        }
+        if (part.inlineData?.data && part.inlineData?.mimeType) {
+  generatedBase64 = part.inlineData.data;
+  generatedMime = part.inlineData.mimeType;
+  break;
+}
       }
 
       if (!generatedBase64) throw new Error("No image generated.");
