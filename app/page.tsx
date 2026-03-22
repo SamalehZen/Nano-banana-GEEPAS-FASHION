@@ -1,18 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ApiKeyProvider, useApiKey, IMAGE_MODELS, type ImageModelId } from '@/contexts/ApiKeyContext';
+import { CanvasProvider, useCanvas } from '@/contexts/CanvasContext';
 import ApiKeyGuard from '@/components/ApiKeyGuard';
-import { ProductDesignMode } from '@/components/ProductDesignMode';
-import { VirtualTryOnMode } from '@/components/VirtualTryOnMode';
-import { EnhanceMode } from '@/components/EnhanceMode';
+import { HeaderBar } from '@/components/canvas/HeaderBar';
+import { ImageCanvas } from '@/components/canvas/ImageCanvas';
+import { CanvasToolbar } from '@/components/canvas/CanvasToolbar';
+import { ZoomControls } from '@/components/canvas/ZoomControls';
+import { ToolOptionBar } from '@/components/canvas/ToolOptionBar';
+import { LayerPanel } from '@/components/canvas/LayerPanel';
+import { ChatPanel } from '@/components/canvas/ChatPanel';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { SparklesIcon, Shirt01Icon, Image01Icon, ArrowExpand01Icon, Settings01Icon, ViewIcon, ViewOffIcon, Delete01Icon } from '@hugeicons/core-free-icons';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Settings01Icon, ViewIcon, ViewOffIcon, Delete01Icon } from '@hugeicons/core-free-icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -88,109 +91,128 @@ function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
                 onChange={(e) => setNewKey(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
               />
-              <Button onClick={handleUpdate} disabled={newKey.trim().length < 10}>
-                Save
-              </Button>
+              <Button onClick={handleUpdate} disabled={newKey.trim().length < 10}>Save</Button>
             </div>
           </div>
         </div>
         <DialogFooter className="flex-row justify-between sm:justify-between">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleClear}
-            className="gap-1.5"
-          >
+          <Button variant="destructive" size="sm" onClick={handleClear} className="gap-1.5">
             <HugeiconsIcon icon={Delete01Icon} size={14} />
             {confirmClear ? 'Confirm Remove' : 'Remove Key'}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function AppContent() {
+function StudioContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<'generating' | 'editing' | null>(null);
+  const [currentState, setCurrentState] = useState<any>(null);
+  const [history, setHistory] = useState<{ image: string; state: any }[]>([]);
+  const { dispatch } = useCanvas();
+  const { state: canvasState } = useCanvas();
+
+  const handleResultImage = useCallback((url: string) => {
+    setResultImage(url);
+
+    const img = new Image();
+    img.onload = () => {
+      const existingImgLayer = canvasState.layers.find(l => l.type === 'image');
+      if (existingImgLayer) {
+        dispatch({ type: 'UPDATE_LAYER', id: existingImgLayer.id, updates: { data: url } });
+      } else {
+        const layerId = `img-${Date.now()}`;
+        dispatch({
+          type: 'ADD_LAYER',
+          layer: {
+            id: layerId,
+            type: 'image',
+            name: 'Generated Image',
+            visible: true,
+            data: url,
+            x: 50,
+            y: 50,
+            width: img.naturalWidth || 512,
+            height: img.naturalHeight || 512,
+          }
+        });
+        dispatch({ type: 'SELECT_LAYER', id: layerId });
+      }
+    };
+    img.src = url;
+  }, [dispatch, canvasState.layers]);
+
+  const handleQuickEdit = useCallback(() => {
+    const chatInput = document.querySelector<HTMLTextAreaElement>('[data-slot="textarea"]');
+    if (chatInput) {
+      chatInput.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && canvasState.selectedLayerId) {
+        const active = document.activeElement;
+        const isInChat = active?.closest('[data-slot="textarea"]') || active?.closest('input');
+        if (!isInChat) {
+          e.preventDefault();
+          handleQuickEdit();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canvasState.selectedLayerId, handleQuickEdit]);
 
   return (
-    <ApiKeyGuard>
-      <main className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <header className="mb-12 text-center space-y-4 relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <HugeiconsIcon icon={Settings01Icon} size={20} className="text-muted-foreground" />
-            </Button>
-            <div className="inline-flex items-center justify-center p-3 bg-primary/10 mb-4">
-              <HugeiconsIcon icon={SparklesIcon} size={32} className="text-primary" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-sans">
-              AI Studio <span className="text-primary">Vision</span>
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Advanced image generation platform powered by Gemini 3.1 Flash Image.
-            </p>
-          </header>
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      <HeaderBar
+        projectName="Untitled"
+        onSettingsClick={() => setSettingsOpen(true)}
+      />
 
-          <Tabs defaultValue="design" className="w-full">
-            <TabsList
-              className="w-full grid grid-cols-3 h-auto p-1 bg-[#f6f8fa] border border-[#e5e5e5] mb-8"
-              aria-label="Mode selection"
-            >
-              <TabsTrigger
-                value="design"
-                className="flex items-center justify-center gap-2.5 h-auto py-3 px-4 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
-              >
-                <HugeiconsIcon icon={Image01Icon} size={18} />
-                Product Design
-              </TabsTrigger>
-              <TabsTrigger
-                value="tryon"
-                className="flex items-center justify-center gap-2.5 h-auto py-3 px-4 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
-              >
-                <HugeiconsIcon icon={Shirt01Icon} size={18} />
-                Virtual Try-On
-              </TabsTrigger>
-              <TabsTrigger
-                value="enhance"
-                className="flex items-center justify-center gap-2.5 h-auto py-3 px-4 text-[15px] font-normal text-[#656d76] transition-all duration-200 ease-in-out hover:text-[#1f2328] data-[state=active]:bg-white data-[state=active]:text-[#1f2328] data-[state=active]:font-semibold"
-              >
-                <HugeiconsIcon icon={ArrowExpand01Icon} size={18} />
-                AI Enhance
-              </TabsTrigger>
-            </TabsList>
+      <div className="flex-1 flex overflow-hidden">
+        <LayerPanel />
 
-            <Card className="p-6 md:p-8">
-              <TabsContent value="design" className="mt-0">
-                <ProductDesignMode />
-              </TabsContent>
-              <TabsContent value="tryon" className="mt-0">
-                <VirtualTryOnMode />
-              </TabsContent>
-              <TabsContent value="enhance" className="mt-0">
-                <EnhanceMode />
-              </TabsContent>
-            </Card>
-          </Tabs>
+        <div className="flex-1 relative flex flex-col">
+          <ImageCanvas resultImage={resultImage} onQuickEdit={handleQuickEdit} />
+          <ToolOptionBar />
+          <ZoomControls />
+          <CanvasToolbar />
         </div>
-      </main>
+
+        <ChatPanel
+          resultImage={resultImage}
+          onResultImage={handleResultImage}
+          isGenerating={isGenerating}
+          setIsGenerating={setIsGenerating}
+          loadingStep={loadingStep}
+          setLoadingStep={setLoadingStep}
+          currentState={currentState}
+          setCurrentState={setCurrentState}
+          history={history}
+          setHistory={setHistory}
+        />
+      </div>
+
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-    </ApiKeyGuard>
+    </div>
   );
 }
 
 export default function Home() {
   return (
     <ApiKeyProvider>
-      <AppContent />
+      <ApiKeyGuard>
+        <CanvasProvider>
+          <StudioContent />
+        </CanvasProvider>
+      </ApiKeyGuard>
     </ApiKeyProvider>
   );
 }
