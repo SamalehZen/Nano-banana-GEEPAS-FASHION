@@ -45,13 +45,19 @@ interface DesignChatbotProps {
   canUndo: boolean;
   isGenerating: boolean;
   loadingStep?: string | null;
+  prefillRequest?: string | null;
 }
 
-export function DesignChatbot({ currentState, onApplyPatch, onUndo, canUndo, isGenerating, loadingStep }: DesignChatbotProps) {
+export function DesignChatbot({ currentState, onApplyPatch, onUndo, canUndo, isGenerating, loadingStep, prefillRequest }: DesignChatbotProps) {
   const ai = useGemini();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  useEffect(() => {
+    if (prefillRequest?.trim()) {
+      setInput(prefillRequest);
+    }
+  }, [prefillRequest]);
 
   const handleSend = async () => {
     if (!input.trim() || isProcessing || isGenerating || !ai) return;
