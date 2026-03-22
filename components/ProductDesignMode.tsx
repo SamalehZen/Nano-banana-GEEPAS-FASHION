@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
 import { MultiImageUploader } from './MultiImageUploader';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Loading03Icon, MagicWand01Icon, Download01Icon } from '@hugeicons/core-free-icons';
+import { Loading03Icon, MagicWand01Icon } from '@hugeicons/core-free-icons';
 import { downloadDataUri } from '@/lib/download';
 import { DesignChatbot, IMAGE_METADATA_SCHEMA } from './DesignChatbot';
 import { useGemini } from '@/hooks/use-gemini';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { CanvasEditor } from './CanvasEditor';
 
 export function ProductDesignMode() {
   const ai = useGemini();
@@ -29,7 +30,7 @@ export function ProductDesignMode() {
   const [currentState, setCurrentState] = useState<any>(null);
   const [history, setHistory] = useState<{image: string, state: any}[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
-
+  const [chatPrefill, setChatPrefill] = useState<string | null>(null);
   const handleGenerate = async () => {
     if (!referenceImage || productImages.length === 0 || !ai) return;
     setIsGenerating(true);
@@ -255,27 +256,26 @@ export function ProductDesignMode() {
           )}
         </div>
 
-        <Card className="flex flex-col items-center justify-center overflow-hidden min-h-[400px] relative bg-muted/30">
+        {resultImage ? (
           {resultImage ? (
+          <CanvasEditor
             <img src={resultImage} alt="Generated Design" className="w-full h-full object-contain" />
+            image={resultImage}
           ) : (
+            alt="Generated Design"
+            downloadLabel="Download Image"
+            onDownload={() => downloadDataUri(resultImage, 'generated-design.png')}
+            onSelectionPrompt={(prompt) => setChatPrefill(prompt)}
+          />
+        ) : (
+          <Card className="flex flex-col items-center justify-center overflow-hidden min-h-[400px] relative bg-muted/30">
             <div className="text-center text-muted-foreground p-8">
               <HugeiconsIcon icon={MagicWand01Icon} size={48} className="mx-auto mb-4 opacity-20" />
               <p>Your generated design will appear here</p>
             </div>
-          )}
+          </Card>
           
-          {resultImage && (
-            <Button
-              variant="secondary"
-              className="absolute bottom-4 right-4 shadow-lg backdrop-blur-sm gap-2"
-              onClick={() => downloadDataUri(resultImage, 'generated-design.png')}
-            >
-              <HugeiconsIcon icon={Download01Icon} size={16} />
-              Download Image
-            </Button>
-          )}
-        </Card>
+        )}
       </div>
 
       {hasGenerated && (
@@ -292,6 +292,7 @@ export function ProductDesignMode() {
             canUndo={history.length > 1}
             isGenerating={isGenerating}
             loadingStep={loadingStep}
+            prefillRequest={chatPrefill}
           />
         ) : null
       )}
