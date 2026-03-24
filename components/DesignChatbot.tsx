@@ -1,9 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
-import { Send, Undo, Loader2 } from 'lucide-react';
+import { Type } from '@google/genai';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { SentIcon, UndoIcon, Loading03Icon } from '@hugeicons/core-free-icons';
 import { JsonViewer } from './JsonViewer';
+import { useGemini } from '@/hooks/use-gemini';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 export const IMAGE_METADATA_SCHEMA = {
   type: Type.OBJECT,
@@ -42,12 +48,13 @@ interface DesignChatbotProps {
 }
 
 export function DesignChatbot({ currentState, onApplyPatch, onUndo, canUndo, isGenerating, loadingStep }: DesignChatbotProps) {
+  const ai = useGemini();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSend = async () => {
-    if (!input.trim() || isProcessing || isGenerating) return;
+    if (!input.trim() || isProcessing || isGenerating || !ai) return;
     
     const userMsg = input;
     setInput('');
@@ -55,8 +62,6 @@ export function DesignChatbot({ currentState, onApplyPatch, onUndo, canUndo, isG
     setIsProcessing(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
-      
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `You are a JSON modifier assistant. 
@@ -96,59 +101,62 @@ Generate a FULLY UPDATED JSON state that incorporates the user's request. Keep e
   };
 
   return (
-    <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 border-t border-border pt-8">
+    <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Separator className="lg:col-span-3" />
       <div className="lg:col-span-2 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">AI Assistant</h3>
-          <button 
+          <Button 
+            variant="outline"
+            size="sm"
             onClick={onUndo} 
             disabled={!canUndo || isGenerating || isProcessing}
-            className="flex items-center gap-2 text-sm px-3 py-1.5 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 disabled:opacity-50 transition-colors"
+            className="gap-2"
           >
-            <Undo size={14} /> Undo Last Change
-          </button>
+            <HugeiconsIcon icon={UndoIcon} size={14} /> Undo Last Change
+          </Button>
         </div>
         
-        <div className="flex-1 min-h-[200px] max-h-[300px] overflow-y-auto bg-muted/30 rounded-xl p-4 border border-border flex flex-col gap-3">
-          {messages.length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center my-auto">
-              Ask me to change text, colors, lighting, background, or add elements!
-            </p>
-          ) : (
-            messages.map((msg, idx) => (
-              <div key={idx} className={`p-3 rounded-lg max-w-[85%] text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground self-end' : 'bg-card border border-border self-start'}`}>
-                {msg.content}
+        <ScrollArea className="flex-1 min-h-[200px] max-h-[300px] bg-muted/30 p-4 border border-border">
+          <div className="flex flex-col gap-3">
+            {messages.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center my-auto py-16">
+                Ask me to change text, colors, lighting, background, or add elements!
+              </p>
+            ) : (
+              messages.map((msg, idx) => (
+                <div key={idx} className={`p-3 max-w-[85%] text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground self-end' : 'bg-card border border-border self-start'}`}>
+                  {msg.content}
+                </div>
+              ))
+            )}
+            {(isProcessing || isGenerating) && (
+              <div className="p-3 bg-card border border-border self-start flex items-center gap-2 text-sm text-muted-foreground">
+                <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" />
+                {isProcessing ? "Analyzing request..." : 
+                 loadingStep === 'editing' ? "Applying edits to image..." :
+                 "Generating new image..."}
               </div>
-            ))
-          )}
-          {(isProcessing || isGenerating) && (
-            <div className="p-3 rounded-lg bg-card border border-border self-start flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 size={14} className="animate-spin" /> 
-              {isProcessing ? "Analyzing request..." : 
-               loadingStep === 'extracting' ? "Extracting image metadata..." :
-               loadingStep === 'editing' ? "Applying edits to image..." :
-               "Generating new image..."}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </ScrollArea>
 
         <div className="flex gap-2">
-          <input 
+          <Input 
             type="text" 
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
             placeholder="e.g., Change the text '75ml' to '125L'..."
-            className="flex-1 bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             disabled={isProcessing || isGenerating}
           />
-          <button 
+          <Button 
+            size="icon"
             onClick={handleSend}
             disabled={!input.trim() || isProcessing || isGenerating}
-            className="bg-primary text-primary-foreground p-3 rounded-lg disabled:opacity-50 hover:bg-primary/90 transition-colors flex items-center justify-center"
           >
-            <Send size={18} />
-          </button>
+            <HugeiconsIcon icon={SentIcon} size={18} />
+          </Button>
         </div>
       </div>
 
