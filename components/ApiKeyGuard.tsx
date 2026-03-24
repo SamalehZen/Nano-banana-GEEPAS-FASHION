@@ -38,10 +38,14 @@ export default function ApiKeyGuard({ children }: { children: React.ReactNode })
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center bg-primary/10">
-            <HugeiconsIcon icon={SparklesIcon} size={28} className="text-primary" />
+          <div className="mx-auto flex items-center justify-center mb-2">
+            <img
+              src="/logo.svg"
+              alt="HyperFix"
+              className="h-12 w-auto"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to AI Studio Vision</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome to HyperFix</CardTitle>
           <CardDescription className="text-base">
             Enter your Google Gemini API key to get started. You need a key with billing enabled for image generation.
           </CardDescription>
