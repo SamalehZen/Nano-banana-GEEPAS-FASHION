@@ -129,14 +129,18 @@ function AppContent() {
             >
               <HugeiconsIcon icon={Settings01Icon} size={20} className="text-muted-foreground" />
             </Button>
-            <div className="inline-flex items-center justify-center p-3 bg-primary/10 mb-4">
-              <HugeiconsIcon icon={SparklesIcon} size={32} className="text-primary" />
+            <div className="inline-flex items-center justify-center mb-6">
+              <img
+                src="/logo.svg"
+                alt="HyperFix"
+                className="h-16 md:h-20 w-auto"
+              />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-sans">
-              AI Studio <span className="text-primary">Vision</span>
+              HyperFix
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Advanced image generation platform powered by Gemini 3.1 Flash Image.
+              Advanced AI-powered platform for intelligent problem solving and creative design assistance.
             </p>
           </header>
 
